@@ -1,0 +1,12 @@
+# virtual environment and python cache
+.venv/
+__pycache__/
+*.pyc
+
+# the dataset is too big for GitHub (100 MB file limit) and not ours to redistribute
+data/*
+!data/.gitkeep
+
+# files the scripts generate
+models/
+outputs/

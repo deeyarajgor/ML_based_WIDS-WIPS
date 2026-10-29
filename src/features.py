@@ -60,6 +60,7 @@ def build_windows(frames):
     # same counts again but pretending deauth frames don't exist (used by experiments.py)
     df["is_mgmt_nd"] = ((df[config.COL_SUBTYPE] < 16) & (df["is_deauth"] == 0)).astype(int)
     df["subtype_nd"] = df[config.COL_SUBTYPE].where(df["is_deauth"] == 0)
+    df["rssi_nd"] = df[config.COL_RSSI].where(df["is_deauth"] == 0)   # signal of non-deauth frames only
 
     feats = df.groupby("window").agg(
         total_frames=("is_deauth", "size"),             # frames seen in this window
@@ -68,6 +69,8 @@ def build_windows(frames):
         rssi_mean=(config.COL_RSSI, "mean"),            # average signal strength
         rssi_std=(config.COL_RSSI, "std"),              # how much the signal varies
         subtype_variety=(config.COL_SUBTYPE, "nunique"),# number of different frame types
+        rssi_mean_nd=("rssi_nd", "mean"),               # signal strength, deauth frames ignored
+        rssi_std_nd=("rssi_nd", "std"),
         mgmt_count_nd=("is_mgmt_nd", "sum"),            # management frames, deauth not counted
         subtype_variety_nd=("subtype_nd", "nunique"),   # frame types, deauth not counted
         attack_frames=("is_attack", "sum"),             # only used to make the label
@@ -75,10 +78,13 @@ def build_windows(frames):
 
     feats["frames_per_sec"] = feats["total_frames"] / config.WINDOW_SECONDS
     feats["deauth_ratio"] = feats["deauth_count"] / feats["total_frames"]
+    feats["frames_per_sec_nd"] = (feats["total_frames"] - feats["deauth_count"]) / config.WINDOW_SECONDS
 
     # fill gaps: a window with one frame has no std, some frames have no signal reading
     feats["rssi_std"] = feats["rssi_std"].fillna(0)
     feats["rssi_mean"] = feats["rssi_mean"].fillna(feats["rssi_mean"].median())
+    feats["rssi_std_nd"] = feats["rssi_std_nd"].fillna(0)
+    feats["rssi_mean_nd"] = feats["rssi_mean_nd"].fillna(feats["rssi_mean_nd"].median())
 
     # label the window: malicious if it contains any attack frame at all
     feats["label"] = (feats["attack_frames"] > 0).astype(int)
@@ -96,3 +102,9 @@ FEATURE_COLUMNS = ["frames_per_sec", "deauth_count", "deauth_ratio",
 # overall traffic rate - that's a fair thing for a real IDS to notice.
 FEATURE_COLUMNS_BLIND = ["frames_per_sec", "mgmt_count_nd", "rssi_mean",
                          "rssi_std", "subtype_variety_nd"]
+
+# the strictest set: every number is computed as if deauth frames were never
+# captured. The model can only notice an attack through side effects on the
+# other traffic, so this is the hardest (and most honest) test.
+FEATURE_COLUMNS_STRICT = ["frames_per_sec_nd", "mgmt_count_nd", "rssi_mean_nd",
+                          "rssi_std_nd", "subtype_variety_nd"]

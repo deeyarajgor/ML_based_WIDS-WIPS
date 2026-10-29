@@ -15,14 +15,20 @@ from sklearn.metrics import (ConfusionMatrixDisplay, accuracy_score, confusion_m
 from sklearn.tree import DecisionTreeClassifier
 
 import config
-from features import (FEATURE_COLUMNS, FEATURE_COLUMNS_BLIND,
+from features import (FEATURE_COLUMNS, FEATURE_COLUMNS_BLIND, FEATURE_COLUMNS_STRICT,
                       build_windows, load_frames)
 
 config.OUT_DIR.mkdir(exist_ok=True)
 rng = np.random.default_rng(42)       # fixed seed so the random thinning repeats
 
+# three levels of difficulty:
+#   all features         - includes the deauth counters (easiest)
+#   no deauth counters   - counters removed, but the flood still shows up in
+#                          total traffic rate and signal strength
+#   deauth frames hidden - every feature ignores deauth frames (hardest)
 FEATURE_SETS = {"all features": FEATURE_COLUMNS,
-                "no deauth features": FEATURE_COLUMNS_BLIND}
+                "no deauth counters": FEATURE_COLUMNS_BLIND,
+                "deauth frames hidden": FEATURE_COLUMNS_STRICT}
 MODELS = {
     "Random Forest": lambda: RandomForestClassifier(
         n_estimators=100, random_state=42, class_weight="balanced"),
@@ -105,7 +111,7 @@ results.to_csv(config.OUT_DIR / "experiment_results.csv", index=False)
 # ---------- print a readable summary ----------
 order = [f"{k * 100:g}%" for k in TEST_LEVELS]
 pd.set_option("display.width", 200)
-for metric in ["recall", "precision"]:
+for metric in ["accuracy", "recall", "precision"]:
     table = results.pivot_table(index=["model", "training", "features"],
                                 columns="attack_kept", values=metric)[order]
     print(f"\n{metric.upper()} by attack strength (100% = real capture):")
@@ -130,12 +136,14 @@ plt.close()
 # ---------- picture 2: detection rate as the attack gets gentler ----------
 plt.figure(figsize=(9, 5.5))
 styles = {"full-strength only": "--", "mixed strengths": "-"}
+colours = {"all features": "tab:green", "no deauth counters": "tab:red",
+           "deauth frames hidden": "tab:blue"}
 for train_name, style in styles.items():
     for fs_name in FEATURE_SETS:
         part = results[(results["model"] == "Random Forest")
                        & (results["training"] == train_name)
                        & (results["features"] == fs_name)]
-        plt.plot(order, part["recall"], style, marker="o",
+        plt.plot(order, part["recall"], style, marker="o", color=colours[fs_name],
                  label=f"{fs_name}, trained on {train_name}")
 plt.xlabel("Share of attack frames kept in test (100% = real capture)")
 plt.ylabel("Recall (share of attack windows caught)")

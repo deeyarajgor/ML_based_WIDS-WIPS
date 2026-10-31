@@ -3,10 +3,14 @@
 __pycache__/
 *.pyc
 
-# the dataset is too big for GitHub (100 MB file limit) and not ours to redistribute
+# the dataset is too big for GitHub (100 MB file limit) 
 data/*
 !data/.gitkeep
+# ...but the small windowed table (one row per second) is committed so the Colab notebook can run
+!data/windows.csv
 
 # files the scripts generate
 models/
-outputs/
+outputs/*
+# keep the result pictures so they can be seen on GitHub
+!outputs/*.png

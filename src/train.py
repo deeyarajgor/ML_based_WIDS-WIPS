@@ -1,5 +1,7 @@
 # train.py
 # Builds the windows, trains the Random Forest, and reports how well it did.
+# Uses the strict feature set: every feature ignores deauth frames, so the model
+# has to spot the attack from side effects on the other traffic (no label leak).
 # Run:  python src/train.py
 
 import joblib
@@ -9,7 +11,7 @@ from sklearn.metrics import (ConfusionMatrixDisplay, accuracy_score,
                              classification_report, confusion_matrix)
 
 import config
-from features import FEATURE_COLUMNS, build_windows, load_frames
+from features import FEATURE_COLUMNS_STRICT, build_windows, load_frames
 
 config.OUT_DIR.mkdir(exist_ok=True)
 config.MODEL_FILE.parent.mkdir(exist_ok=True)
@@ -34,10 +36,10 @@ print(f"Test:  {len(test)} windows ({test['label'].sum()} attack)")
 # 3. train the model
 model = RandomForestClassifier(n_estimators=100, random_state=42,
                                class_weight="balanced")  # keeps the rarer class from being ignored
-model.fit(train[FEATURE_COLUMNS], train["label"])
+model.fit(train[FEATURE_COLUMNS_STRICT], train["label"])
 
 # 4. test it on windows it has never seen
-predictions = model.predict(test[FEATURE_COLUMNS])
+predictions = model.predict(test[FEATURE_COLUMNS_STRICT])
 truth = test["label"]
 
 print(f"\nAccuracy: {accuracy_score(truth, predictions):.4f}")
@@ -58,7 +60,7 @@ plt.close()
 
 # which features did the forest rely on most?
 print("\nFeature importance:")
-importances = sorted(zip(FEATURE_COLUMNS, model.feature_importances_),
+importances = sorted(zip(FEATURE_COLUMNS_STRICT, model.feature_importances_),
                      key=lambda pair: pair[1], reverse=True)
 for name, score in importances:
     print(f"  {name:18s} {score:.3f}")

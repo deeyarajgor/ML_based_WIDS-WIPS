@@ -12,7 +12,7 @@ import joblib
 import pandas as pd
 
 import config
-from features import FEATURE_COLUMNS
+from features import FEATURE_COLUMNS_STRICT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--delay", type=float, default=0.05,
@@ -24,7 +24,7 @@ windows = pd.read_csv(config.OUT_DIR / "test_windows.csv")   # saved by train.py
 windows = windows.sort_values("window").reset_index(drop=True)
 
 # ask the model about every window up front (faster than one at a time)
-windows["flagged"] = model.predict(windows[FEATURE_COLUMNS])
+windows["flagged"] = model.predict(windows[FEATURE_COLUMNS_STRICT])
 
 alert_log = config.OUT_DIR / "alerts.log"
 CALM_NEEDED = 3        # clear windows in a row before we call the attack over

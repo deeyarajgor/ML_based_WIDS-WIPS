@@ -1,4 +1,3 @@
-# detect.py
 # Replays the test windows second by second, like a live feed, and asks the
 # trained model "attack or normal?" for each one. It raises an alert when an
 # attack starts and says when it ends.

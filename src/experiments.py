@@ -1,4 +1,3 @@
-# experiments.py
 # The first results were almost perfect, which is too good to be useful.
 # This script asks harder questions instead:
 #   1. What if the model can't use the deauth-specific features?

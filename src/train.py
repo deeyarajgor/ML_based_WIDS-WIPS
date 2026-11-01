@@ -1,4 +1,3 @@
-# train.py
 # Builds the windows, trains the Random Forest, and reports how well it did.
 # Uses the strict feature set: every feature ignores deauth frames, so the model
 # has to spot the attack from side effects on the other traffic (no label leak).

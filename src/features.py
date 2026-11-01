@@ -1,4 +1,3 @@
-# features.py
 # Turns a list of individual Wi-Fi frames into one row per time window.
 # A single frame tells us almost nothing. But "300 deauth frames arrived in
 # one second" tells us a lot - that's what the model learns from.

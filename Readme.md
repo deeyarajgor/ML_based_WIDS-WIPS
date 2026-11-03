@@ -51,8 +51,4 @@ experiments for harder cases.
 
 ## Use of AI tools
 
-## Use of AI tools
-
-## Use of AI tools
-
 Claude (Anthropic) wrote the code from my brief and revised it based on my results; I chose the data, ran and tested everything, and can explain each part.
